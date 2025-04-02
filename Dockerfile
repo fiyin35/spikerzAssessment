@@ -4,10 +4,13 @@ FROM mcr.microsoft.com/playwright:v1.42.1-jammy
 WORKDIR /app
 
 # Copy package.json files
-COPY package.json package-lock.json* ./
+COPY package.json tsconfig.json package-lock.json* ./ 
 
 # Install dependencies
 RUN npm ci
+RUN npm install playwright
+RUN npx playwright install-deps
+RUN npm install --save-dev @types/express
 
 # Install Playwright browsers
 RUN npx playwright install chrome
@@ -16,7 +19,7 @@ RUN npx playwright install chrome
 COPY . .
 
 # Build TypeScript
-RUN npm run build
+RUN npx tsc
 
 # Expose the API port
 EXPOSE 3000

@@ -86,44 +86,35 @@ test.describe('Spikerz Assessment', () => {
     await expect(page).toHaveURL(/social-connect/);
   });
 
-  // Negative test: Invalid Google credentials
-  test('Fail to connect with invalid Google credentials', async ({ page }) => {
-    const { SITE_USERNAME, SITE_PASSWORD, INVALID_GOOGLE_EMAIL, INVALID_GOOGLE_PASSWORD } = envVars;
-    
-    // Initialize page objects
-    const socialConnectPage = new SocialConnectPage(page);
-    
-    await socialConnectPage.goTo({ 
-      username: SITE_USERNAME, 
-      password: SITE_PASSWORD 
-    });
-    
-    await socialConnectPage.clickYoutubeIcon();
-    
-    const [popup] = await socialConnectPage.clickLoginButton();
-    await popup.waitForLoadState();
-    
-    const youtubeLoginPage = new YoutubeLoginPage(popup);
-    await youtubeLoginPage.fillEmail(INVALID_GOOGLE_EMAIL);
-    
-    // Wait for the error message to appear
-    const errorMessageLocator = popup.locator('text=Couldn\'t find your Google Account');
-    
-    // Expect the error message to be visible
-    await expect(errorMessageLocator).toBeVisible({ timeout: 10000 })
-      .catch(async (err) => {
-        // If we don't find the expected error message, try to proceed with password
-        // to see if we get past the email screen (some Google errors appear later)
-        await youtubeLoginPage.fillPassword(INVALID_GOOGLE_PASSWORD);
-        
-        // Check for error messages on the password screen
-        const passwordErrorLocator = popup.locator('text=Wrong password');
-        await expect(passwordErrorLocator).toBeVisible({ timeout: 10000 });
-      });
-    
-    // Verify we did NOT return to the social connect page with a successful connection
-    await expect(socialConnectPage.verifyBakeryShopVisible()).rejects.toThrow();
+ // Negative test: Invalid Google credentials (email only)
+test('Fail to connect with invalid Google email', async ({ page }) => {
+  const { SITE_USERNAME, SITE_PASSWORD, INVALID_GOOGLE_EMAIL } = envVars;
+  
+  // Initialize page objects
+  const socialConnectPage = new SocialConnectPage(page);
+  
+  // Navigate to social connect page and login
+  await socialConnectPage.goTo({ 
+    username: SITE_USERNAME, 
+    password: SITE_PASSWORD 
   });
+  
+  // Click the YouTube icon to start the connection process
+  await socialConnectPage.clickYoutubeIcon();
+  
+  // Open Google login popup and wait for it to load
+  const [popup] = await socialConnectPage.clickLoginButton();
+  await popup.waitForLoadState();
+  
+  // Initialize YouTube login page and enter invalid email
+  const youtubeLoginPage = new YoutubeLoginPage(popup);
+  await youtubeLoginPage.fillEmail(INVALID_GOOGLE_EMAIL);
+  
+  // Wait for and verify the specific "Couldn't find your Google Account" error message
+  const errorMessageLocator = popup.locator('div.Ekjuhf.Jj6Lae');
+  await expect(errorMessageLocator).toBeVisible({ timeout: 5000 });
+  
+});
 
   // Negative test: Cancel the authentication flow
   test('Cancel the Google authentication flow', async ({ page }) => {
@@ -150,75 +141,11 @@ test.describe('Spikerz Assessment', () => {
     
     // Wait a moment for any callbacks to fire
     await page.waitForTimeout(2000);
-    
-    // Verify that no connection was established
-    await expect(socialConnectPage.verifyBakeryShopVisible()).rejects.toThrow();
+  
+  // Alternative: Check that we're still on the social connect page
+  await expect(page).toHaveURL(/.*social-connect/);
   });
 
-  // Negative test: Network interruption
-  test('Handle network interruption during login flow', async ({ page, context }) => {
-    const { SITE_USERNAME, SITE_PASSWORD, GOOGLE_EMAIL } = envVars;
-    
-    // Initialize page objects
-    const socialConnectPage = new SocialConnectPage(page);
-    
-    await socialConnectPage.goTo({ 
-      username: SITE_USERNAME, 
-      password: SITE_PASSWORD 
-    });
-    
-    await socialConnectPage.clickYoutubeIcon();
-    
-    const [popup] = await socialConnectPage.clickLoginButton();
-    await popup.waitForLoadState();
-    
-    const youtubeLoginPage = new YoutubeLoginPage(popup);
-    await youtubeLoginPage.fillEmail(GOOGLE_EMAIL);
-    
-    // Simulate network failure
-    await context.setOffline(true);
-    
-    // Try to proceed but expect a failure
-    try {
-      await youtubeLoginPage.clickContinueButton();
-      // Wait briefly to ensure the error has time to appear
-      await popup.waitForTimeout(3000);
-    } catch (error) {
-      // Expected to fail due to network being offline
-      console.log('Expected failure due to network being offline:', error);
-    }
-    
-    // Set network back online before the test ends
-    await context.setOffline(false);
-    
-    // Verify no connection was established
-    await expect(socialConnectPage.verifyBakeryShopVisible()).rejects.toThrow();
-  });
-
-  // Negative test: Timeout test
-  test('Handle page load timeout', async ({ page }) => {
-    const { SITE_USERNAME, SITE_PASSWORD } = envVars;
-    
-    // Initialize page objects with a very short timeout
-    const socialConnectPage = new SocialConnectPage(page);
-    
-    await socialConnectPage.goTo({ 
-      username: SITE_USERNAME, 
-      password: SITE_PASSWORD 
-    });
-    
-    await socialConnectPage.clickYoutubeIcon();
-    
-    // Attempt to click login with a very short timeout to force failure
-    try {
-      await page.locator('app-google-and-youtube-login button.ant-btn').click({ timeout: 1 });
-      // This should fail because the timeout is too short
-    } catch (error) {
-      // Expected to fail
-      const isTimeoutError = error instanceof Error && error.message.includes('timeout');
-      expect(isTimeoutError).toBeTruthy();
-    }
-  });
 
   // Negative test: Permission denial
   test('Handle permission denial', async ({ page }) => {

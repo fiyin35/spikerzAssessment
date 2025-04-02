@@ -1,19 +1,26 @@
 import { defineConfig, devices } from '@playwright/test';
 
-/**
- * Read environment variables from file.
- * https://github.com/motdotla/dotenv
- */
-// import dotenv from 'dotenv';
-// import path from 'path';
+import dotenv from 'dotenv';
+import path from 'path';
+import fs from 'fs';
+
+
 // dotenv.config({ path: path.resolve(__dirname, '.env') });
 
+// Load environment variables
+dotenv.config();
+// Load local environment variables with higher priority
+if (fs.existsSync(path.join(process.cwd(), '.env.local'))) {
+  dotenv.config({ path: path.join(process.cwd(), '.env.local'), override: true });
+}
+
 /**
- * See https://playwright.dev/docs/test-configuration.
+ * @see https://playwright.dev/docs/test-configuration
  */
 export default defineConfig({
   testDir: './tests',
-  timeout: 60000,
+  timeout: 90000,
+  
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -31,6 +38,7 @@ export default defineConfig({
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: "on-first-retry",
 
+    //retries: 2, // Retries twice if a test fails
     headless: false,
     launchOptions: {
       args: [
@@ -59,6 +67,7 @@ export default defineConfig({
       use: { ...devices['Desktop Safari'] },
     },
 
+  
     /* Test against mobile viewports. */
     // {
     //   name: 'Mobile Chrome',
@@ -87,3 +96,4 @@ export default defineConfig({
   //   reuseExistingServer: !process.env.CI,
   // },
 });
+

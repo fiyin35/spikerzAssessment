@@ -39,7 +39,7 @@ export default defineConfig({
     trace: "on-first-retry",
 
     //retries: 2, // Retries twice if a test fails
-    headless: false,
+    headless: true,
     launchOptions: {
       args: [
         "--disable-blink-features=AutomationControlled",

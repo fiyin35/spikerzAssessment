@@ -16,8 +16,6 @@ export class YoutubeLoginPage {
     this.page = page;
     this.emailInput = page.locator('input[type="email"]');
     this.passwordInput = page.locator('input[type="password"]');
-    
-    //this.passwordInput = page.locator('getByRole("textbox", { name: "Enter your password" })')
     this.nextButton = page.locator('button:has-text("Next")');
     this.continueButton = page.locator('button:has-text("Continue")');
     this.selectAllCheckbox = page.locator('text=Select all permissions');
@@ -34,7 +32,6 @@ export class YoutubeLoginPage {
   }
 
   async fillPassword(password: string): Promise<void> {
-    //await this.passwordInput.waitFor({ state: 'visible', timeout: 10000 });
     await this.passwordInput.fill(password);
     await this.nextButton.click();
     await this.continueButton.click();
@@ -43,15 +40,9 @@ export class YoutubeLoginPage {
 
   async handlePermissions(): Promise<void> {
     try {
-      // Wait for a short time to see if the permissions page appears
-      //await this.page.waitForSelector('text=Select what Spikerz can access', { timeout: 10000 });
       await this.continueButton.click();
-
       // Check if "Select all" checkbox exists and is not already checked
       const selectAllExists = await this.selectAllCheckbox.isVisible();
-
-      //await this.selectAllCheckbox.click();
-
       if (selectAllExists) {
         // Click the "Select all" checkbox if it's not already checked
         await this.selectAllCheckbox.click();
@@ -64,9 +55,6 @@ export class YoutubeLoginPage {
     } catch (error) {
       console.log('Permissions page not found or already handled, continuing...');
       // If the permissions page doesn't appear, just try to click continue
-    
-        //await this.page.keyboard.press('End');
-
         await this.continueButton.click();
         console.log('Continue button not found, proceeding with the test');
     }

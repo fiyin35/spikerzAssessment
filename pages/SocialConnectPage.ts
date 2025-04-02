@@ -16,26 +16,34 @@ export class SocialConnectPage {
     this.baseUrl = process.env.BASE_URL || 'https://demo.spikerz.com';
   }
 
- 
   async goTo(credentials: { username: string; password: string }): Promise<void> {
     const { username, password } = credentials;
     await this.page.goto(`https://${username}:${password}@${this.baseUrl.replace('https://', '')}/social-connect/`);
   }
   
   async clickYoutubeIcon(): Promise<void> {
-    await this.youtubeIcon.waitFor();
+    await this.youtubeIcon.waitFor({ timeout: 4000 });
     await this.youtubeIcon.click();
   }
-
-  async clickLoginButton(): Promise<[Page]> {
-    const popupPromise = this.page.waitForEvent('popup');
-    await this.youtubeLoginButton.click();
-    const popup = await popupPromise;
+  
+  async clickLoginButton(): Promise<[Page | null]> {
+    await this.youtubeLoginButton.waitFor({ state: 'visible' }); // Ensure button is visible
+  
+    const [popup] = await Promise.all([
+      this.page.waitForEvent('popup', { timeout: 9000 }), // Wait for the popup
+      this.youtubeLoginButton.click(), // Click the button
+    ]).catch(() => [null]); // Catch errors if the popup doesn't appear
+  
+    if (!popup) {
+      throw new Error("Popup did not appear in headless mode. Possible popup block.");
+    }
+  
+    await popup.waitForLoadState('load', { timeout: 6000 }); // Ensure the popup loads before returning
     return [popup];
   }
-  
+
   async verifyBakeryShopVisible(): Promise<boolean> {
-    await this.bakeryShopElement.waitFor();
+    await this.bakeryShopElement.waitFor({timeout: 4000});
     return this.bakeryShopElement.isVisible();
   }
 }

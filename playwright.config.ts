@@ -40,12 +40,12 @@ export default defineConfig({
 
     //retries: 2, // Retries twice if a test fails
     headless: true,
-    launchOptions: {
-      args: [
-        "--disable-blink-features=AutomationControlled",
-        "--disable-features=IsolateOrigins,site-per-process",
-      ]
-    },
+    // launchOptions: {
+    //   args: [
+    //     "--disable-blink-features=AutomationControlled",
+    //     "--disable-features=IsolateOrigins,site-per-process",
+    //   ]
+    // },
     baseURL: process.env.BASE_URL || 'https://demo.spikerz.com',
 
   },
